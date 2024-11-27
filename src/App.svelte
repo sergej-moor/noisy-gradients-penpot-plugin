@@ -1,17 +1,23 @@
 <script lang="ts">
+
   import type { NoiseSettings } from './types';
   import { onMount } from 'svelte';
-
-  let theme = $state("");
+ 
+  let theme = $state(getTheme());
   let canvas: HTMLCanvasElement;
-  
+  function getTheme() {
+  const urlParams = new URLSearchParams(window.location.search);
+  return urlParams.get("theme") === "light" ? "light" : "dark";
+}
   // Noise settings
+  const availableSizes = [800, 1200, 2000, 2400, 4000];
+  
   let settings: NoiseSettings = $state({
     scale: 0.007,
     redIntensity: 1,
     greenIntensity: 1,
     blueIntensity: 1,
-    size: 200
+    size: 800
   });
 
   let isGenerating = $state(false);
@@ -35,6 +41,7 @@
         );
       } else {
         console.error("Could not convert canvas to blob");
+        isGenerating = false;
       }
     });
   }
@@ -121,6 +128,12 @@
   onMount(() => {
     initPermutation();
     generateNoise();
+
+    window.addEventListener('message', (event) => {
+      if (event.data.type === 'image-success') {
+        isGenerating = false;
+      }
+    });
   });
 
   $effect(() => {
@@ -129,143 +142,79 @@
 </script>
 
 <main data-theme={theme}>
-  <div class="container">
-    <h2>Noise Gradient</h2>
-    <canvas bind:this={canvas}></canvas>
+  <div class="canvas-container">
+    <canvas 
+      bind:this={canvas}>
+    </canvas>
+    <button 
+      type="button" 
+      data-appearance="secondary"
+      class="new-noise-button"
+      aria-label="Generate new noise pattern"
+      onclick={() => {
+        initPermutation();
+        generateNoise();
+      }}>
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="12" height="12" x="2" y="10" rx="2" ry="2"/><path d="m17.92 14 3.5-3.5a2.24 2.24 0 0 0 0-3l-5-4.92a2.24 2.24 0 0 0-3 0L10 6"/><path d="M6 18h.01"/><path d="M10 14h.01"/><path d="M15 6h.01"/><path d="M18 9h.01"/></svg>
+    </button>
+  </div>
+  
+  <div class="controls-section">
+    <label class="slider-row">
+      <span class="body-s">Scale: <!-- {settings.scale.toFixed(3)} --></span>
+      <input type="range" 
+             bind:value={settings.scale} 
+             min="0.001" max="0.015" step="0.001">
+    </label>
     
-    <div class="controls">
-      <label>
-        Size: {settings.size}px
-        <input type="range" 
-               bind:value={settings.size} 
-               min="50" max="1000" step="10">
-      </label>
+    <label class="slider-row">
+      <span class="body-s"><span class="color-dot red"></span>Red: <!-- {settings.redIntensity.toFixed(2)} --></span>
+      <input type="range" 
+             bind:value={settings.redIntensity} 
+             min="0" max="3" step="0.1">
+    </label>
+    
+    <label class="slider-row">
+      <span class="body-s"><span class="color-dot green"></span>Green: <!-- {settings.greenIntensity.toFixed(2)} --></span>
+      <input type="range" 
+             bind:value={settings.greenIntensity} 
+             min="0" max="3" step="0.1">
+    </label>
+    
+    <label class="slider-row">
+      <span class="body-s"><span class="color-dot blue"></span>Blue: <!-- {settings.blueIntensity.toFixed(2)} --></span>
+      <input type="range" 
+             bind:value={settings.blueIntensity} 
+             min="0" max="3" step="0.1">
+    </label>
 
-      <label>
-        Scale: {settings.scale.toFixed(3)}
-        <input type="range" 
-               bind:value={settings.scale} 
-               min="0.001" max="0.1" step="0.001">
+    <div class="bottom-section">
+      <label class="form-group">
+        <span class="body-s">Size (px)</span>
+        <select 
+          bind:value={settings.size}
+          class="select">
+          {#each availableSizes as size}
+            <option value={size}>{size}</option>
+          {/each}
+        </select>
       </label>
-      
-      <label>
-        Red: {settings.redIntensity.toFixed(2)}
-        <input type="range" 
-               bind:value={settings.redIntensity} 
-               min="0" max="2" step="0.1">
-      </label>
-      
-      <label>
-        Green: {settings.greenIntensity.toFixed(2)}
-        <input type="range" 
-               bind:value={settings.greenIntensity} 
-               min="0" max="2" step="0.1">
-      </label>
-      
-      <label>
-        Blue: {settings.blueIntensity.toFixed(2)}
-        <input type="range" 
-               bind:value={settings.blueIntensity} 
-               min="0" max="2" step="0.1">
-      </label>
-
-      <div class="button-group">
-        <button onclick={() => {
-          initPermutation();
-          generateNoise();
-        }}>Regenerate</button>
-        <button 
-          onclick={handleApply}
-          disabled={isGenerating}
-          class="primary"
-        >
-          {#if isGenerating}
-            Generating...
-          {:else}
-            Add to canvas
-          {/if}
-        </button>
-      </div>
+      <button 
+        type="button"
+        data-appearance="primary"
+        class="insert-button"
+        onclick={handleApply}
+        disabled={isGenerating}>
+        {#if isGenerating}
+          Generating...
+        {:else}
+          <span class="body-m">Insert</span>
+          <span class="body-s" style="opacity: 0.8">{settings.size}×{settings.size}px, PNG</span>
+        {/if}
+      </button>
     </div>
   </div>
 </main>
 
-<style>
-  .container {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-    padding: 0.75rem;
-    align-items: center;
-    max-width: 200px;
-    margin: 0 auto;
-    color: white;
-    
-  }
 
-  h2 {
-    font-size: 1.2rem;
-    margin: 0;
-  }
-
-  canvas {
-    width: 200px;
-    height: 200px;
-    border-radius: 4px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  }
-
-  .controls {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    width: 100%;
-  }
-
-  label {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-    font-size: 0.9rem;
-    
-  }
-
-  input[type="range"] {
-    width: 100%;
-  }
-
-  button {
-    margin-top: 0.5rem;
-    padding: 0.5rem;
-    background-color: #0284c7;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    width: 100%;
-  }
-
-  button:hover {
-    background-color: #0369a1;
-  }
-
-  .button-group {
-    display: flex;
-    gap: 0.5rem;
-    margin-top: 0.5rem;
-  }
-
-  .button-group button {
-    flex: 1;
-    margin-top: 0;
-  }
-
-  button.primary {
-    background-color: #059669;
-  }
-
-  button.primary:hover {
-    background-color: #047857;
-  }
-</style>
 

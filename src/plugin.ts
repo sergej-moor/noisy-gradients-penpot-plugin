@@ -1,10 +1,10 @@
 import type { PluginMessageEvent } from "./types";
 import type { Shape } from "@penpot/plugin-types";
 
-// Initialize plugin
+// Initialize plugin with slightly less height since canvas is now more compact
 penpot.ui.open("Noise Gradient", `?theme=${penpot.theme}`, {
-  width: 240,
-  height: 600,
+  width: 264,
+  height: 500,
 });
 
 async function addGradientToCanvas(data: { buffer: Uint8Array; size: number }) {

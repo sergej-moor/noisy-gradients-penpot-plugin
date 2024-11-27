@@ -1,16 +1,50 @@
 import type { PluginMessageEvent } from "./types";
+import type { Shape } from "@penpot/plugin-types";
 
-// Open UI with default size for our controls
-penpot.ui.open("Plugin Template", `?theme=${penpot.theme}`, {
-  width: 300,
-  height: 400,
+// Initialize plugin
+penpot.ui.open("Noise Gradient", `?theme=${penpot.theme}`, {
+  width: 240,
+  height: 600,
 });
+
+async function addGradientToCanvas(data: { buffer: Uint8Array; size: number }) {
+  const blockId = penpot.history.undoBlockBegin();
+  try {
+    const image = await penpot.uploadMediaData(
+      "gradient",
+      data.buffer,
+      "image/png"
+    );
+
+    if (image) {
+      penpot.ui.sendMessage({ type: "image-success" });
+    }
+
+    const rect = penpot.createRectangle();
+    rect.x = penpot.viewport.center.x;
+    rect.y = penpot.viewport.center.y;
+    rect.resize(data.size, data.size);
+    rect.fills = [{ fillOpacity: 1, fillImage: image }];
+  } finally {
+    penpot.history.undoBlockFinish(blockId);
+  }
+}
 
 // Listen for theme changes
 penpot.on("themechange", (theme) => {
-  sendMessage({ type: "theme", content: theme });
+  penpot.ui.sendMessage({
+    source: "penpot",
+    type: "themechange",
+    theme,
+  });
 });
 
-function sendMessage(message: PluginMessageEvent) {
-  penpot.ui.sendMessage(message);
-}
+// Handle messages from UI
+penpot.ui.onMessage<{
+  type: string;
+  data: any;
+}>((message) => {
+  if (message.type === "generate-gradient") {
+    addGradientToCanvas(message.data);
+  }
+});

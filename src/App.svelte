@@ -1,25 +1,71 @@
 <script lang="ts">
-  import type { PluginMessageEvent } from './types';
+  import type { NoiseSettings } from './types';
   import { onMount } from 'svelte';
 
   let theme = $state("");
   let canvas: HTMLCanvasElement;
-  let scale = $state(0.007);
-  let redIntensity = $state(1);
-  let greenIntensity = $state(1);
-  let blueIntensity = $state(1);
+  
+  // Noise settings
+  let settings: NoiseSettings = $state({
+    scale: 0.007,
+    redIntensity: 1,
+    greenIntensity: 1,
+    blueIntensity: 1,
+    size: 200
+  });
 
-  // Initial theme from URL
-  const url = new URL(window.location.href);
-  const initialTheme = url.searchParams.get('theme');
-  if (initialTheme) theme = initialTheme;
+  let isGenerating = $state(false);
 
-  // Handle incoming messages
-  const handleMessage = (event: MessageEvent) => {
-    const message = event.data as PluginMessageEvent;
-    if (message.type === 'theme') {
-      theme = message.content;
+  function handleApply() {
+    if (!canvas) return;
+    isGenerating = true;
+
+    canvas.toBlob(async (blob) => {
+      if (blob) {
+        const buffer = await blob.arrayBuffer();
+        parent.postMessage(
+          {
+            type: "generate-gradient",
+            data: {
+              buffer: new Uint8Array(buffer),
+              size: settings.size,
+            },
+          },
+          "*"
+        );
+      } else {
+        console.error("Could not convert canvas to blob");
+      }
+    });
+  }
+
+  function generateNoise() {
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d')!;
+    const fixedSize = 200;
+    canvas.width = fixedSize;
+    canvas.height = fixedSize;
+    
+    const imageData = ctx.createImageData(fixedSize, fixedSize);
+    const data = imageData.data;
+    
+    for (let y = 0; y < fixedSize; y++) {
+      for (let x = 0; x < fixedSize; x++) {
+        const i = (y * fixedSize + x) * 4;
+        
+        const r = noise(x * settings.scale, y * settings.scale);
+        const g = noise((x + fixedSize) * settings.scale, y * settings.scale);
+        const b = noise(x * settings.scale, (y + fixedSize) * settings.scale);
+        
+        data[i] = Math.floor((r + 1) * 128 * settings.redIntensity);
+        data[i + 1] = Math.floor((g + 1) * 128 * settings.greenIntensity);
+        data[i + 2] = Math.floor((b + 1) * 128 * settings.blueIntensity);
+        data[i + 3] = 255;
+      }
     }
+    
+    ctx.putImageData(imageData, 0, 0);
   }
 
   // Perlin noise implementation
@@ -72,43 +118,7 @@
     for (let i = 0; i < 256; i++) p[256 + i] = p[i] = permutation[i];
   }
 
-  function generateNoise() {
-    if (!canvas) return;
-    
-    const ctx = canvas.getContext('2d')!;
-    const size = 200;
-    
-    const imageData = ctx.createImageData(size, size);
-    const data = imageData.data;
-    
-    for (let y = 0; y < size; y++) {
-      for (let x = 0; x < size; x++) {
-        const i = (y * size + x) * 4;
-        
-        // Generate different noise values for each color channel
-        const r = noise(x * scale, y * scale);
-        const g = noise((x + size) * scale, y * scale);
-        const b = noise(x * scale, (y + size) * scale);
-        
-        // Convert noise values to color (0-255) with intensity adjustment
-        data[i] = Math.floor((r + 1) * 128 * redIntensity);     // Red
-        data[i + 1] = Math.floor((g + 1) * 128 * greenIntensity); // Green
-        data[i + 2] = Math.floor((b + 1) * 128 * blueIntensity); // Blue
-        data[i + 3] = 255;                       // Alpha
-      }
-    }
-    
-    ctx.putImageData(imageData, 0, 0);
-  }
-
-  function regenerateNoise() {
-    initPermutation();
-    generateNoise();
-  }
-
   onMount(() => {
-    canvas.width = 200;
-    canvas.height = 200;
     initPermutation();
     generateNoise();
   });
@@ -118,8 +128,6 @@
   });
 </script>
 
-<svelte:window onmessage={handleMessage} />
-
 <main data-theme={theme}>
   <div class="container">
     <h2>Noise Gradient</h2>
@@ -127,26 +135,57 @@
     
     <div class="controls">
       <label>
-        Scale: {scale.toFixed(3)}
-        <input type="range" bind:value={scale} min="0.001" max="0.1" step="0.001">
+        Size: {settings.size}px
+        <input type="range" 
+               bind:value={settings.size} 
+               min="50" max="1000" step="10">
+      </label>
+
+      <label>
+        Scale: {settings.scale.toFixed(3)}
+        <input type="range" 
+               bind:value={settings.scale} 
+               min="0.001" max="0.1" step="0.001">
       </label>
       
       <label>
-        Red: {redIntensity.toFixed(2)}
-        <input type="range" bind:value={redIntensity} min="0" max="2" step="0.1">
+        Red: {settings.redIntensity.toFixed(2)}
+        <input type="range" 
+               bind:value={settings.redIntensity} 
+               min="0" max="2" step="0.1">
       </label>
       
       <label>
-        Green: {greenIntensity.toFixed(2)}
-        <input type="range" bind:value={greenIntensity} min="0" max="2" step="0.1">
+        Green: {settings.greenIntensity.toFixed(2)}
+        <input type="range" 
+               bind:value={settings.greenIntensity} 
+               min="0" max="2" step="0.1">
       </label>
       
       <label>
-        Blue: {blueIntensity.toFixed(2)}
-        <input type="range" bind:value={blueIntensity} min="0" max="2" step="0.1">
+        Blue: {settings.blueIntensity.toFixed(2)}
+        <input type="range" 
+               bind:value={settings.blueIntensity} 
+               min="0" max="2" step="0.1">
       </label>
-      
-      <button onclick={regenerateNoise}>Regenerate</button>
+
+      <div class="button-group">
+        <button onclick={() => {
+          initPermutation();
+          generateNoise();
+        }}>Regenerate</button>
+        <button 
+          onclick={handleApply}
+          disabled={isGenerating}
+          class="primary"
+        >
+          {#if isGenerating}
+            Generating...
+          {:else}
+            Add to canvas
+          {/if}
+        </button>
+      </div>
     </div>
   </div>
 </main>
@@ -160,6 +199,8 @@
     align-items: center;
     max-width: 200px;
     margin: 0 auto;
+    color: white;
+    
   }
 
   h2 {
@@ -186,6 +227,7 @@
     flex-direction: column;
     gap: 0.25rem;
     font-size: 0.9rem;
+    
   }
 
   input[type="range"] {
@@ -205,6 +247,25 @@
 
   button:hover {
     background-color: #0369a1;
+  }
+
+  .button-group {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+  }
+
+  .button-group button {
+    flex: 1;
+    margin-top: 0;
+  }
+
+  button.primary {
+    background-color: #059669;
+  }
+
+  button.primary:hover {
+    background-color: #047857;
   }
 </style>
 

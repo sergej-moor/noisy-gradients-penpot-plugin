@@ -8,11 +8,19 @@ export interface ThemePluginEvent {
 }
 
 export interface PluginMessageEvent {
-  type: "theme";
-  content: string;
+  type: "theme" | "generate-gradient";
+  data: any;
 }
 
-export interface PixelizeOptions {
-  pixelSize: number;
-  opacity: number;
+export interface NoiseSettings {
+  scale: number;
+  redIntensity: number;
+  greenIntensity: number;
+  blueIntensity: number;
+  size: number;
+}
+
+export interface GradientData {
+  base64: string;
+  size: number;
 }

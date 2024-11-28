@@ -1,4 +1,5 @@
 @import "./penpot.css";
+@import "./range-input.css";
 
 :root {
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
@@ -9,6 +10,8 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+/* Layout */
 body {
   margin: 0;
   display: flex;
@@ -17,14 +20,17 @@ body {
   min-height: 100vh;
 }
 
+/* Theme */
 main[data-theme="light"] {
   --background-color: transparent;
   --text-color: #242424;
 }
+
 main[data-theme="dark"] {
   --background-color: #242424;
   --text-color: rgba(255, 255, 255, 0.87);
 }
+
 main {
   color-scheme: light dark;
   background-color: var(--background-color);
@@ -35,6 +41,7 @@ main {
   margin: 0 auto;
 }
 
+/* Button styles */
 button {
   padding: 0.4rem 0.8rem;
   border-radius: 0.8rem;
@@ -47,117 +54,7 @@ button:focus {
   box-shadow: 0 0 0 0px var(--la-primary);
 }
 
-/* Modern Range Input Styling */
-input[type="range"] {
-  -webkit-appearance: none;
-  appearance: none;
-  background: transparent;
-  width: 100%;
-  height: 16px;
-  margin: 0 8px;
-  padding: 0;
-}
-
-/* Thumb Styling */
-input[type="range"]::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  height: 16px;
-  width: 16px;
-  border-radius: 50%;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  margin-top: -7px;
-}
-
-input[type="range"]::-moz-range-thumb {
-  height: 16px;
-  width: 16px;
-  border: none;
-  border-radius: 50%;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-/* Track Styling */
-input[type="range"]::-webkit-slider-runnable-track {
-  width: 100%;
-  height: 2px;
-  border-radius: 1px;
-  transition: all 0.15s ease;
-}
-
-input[type="range"]::-moz-range-track {
-  width: 100%;
-  height: 2px;
-  border-radius: 1px;
-  transition: all 0.15s ease;
-}
-
-/* Theme-specific colors */
-[data-theme="light"] input[type="range"] {
-  accent-color: var(--la-primary);
-}
-
-[data-theme="light"] input[type="range"]::-webkit-slider-thumb {
-  background: var(--la-primary);
-  box-shadow: 0 0 0 4px rgba(var(--la-primary-rgb), 0.1);
-}
-
-[data-theme="light"] input[type="range"]::-webkit-slider-runnable-track {
-  background: var(--lb-tertiary);
-}
-
-[data-theme="light"] input[type="range"]::-moz-range-thumb {
-  background: var(--la-primary);
-  box-shadow: 0 0 0 4px rgba(var(--la-primary-rgb), 0.1);
-}
-
-[data-theme="light"] input[type="range"]::-moz-range-track {
-  background: var(--lb-tertiary);
-}
-
-[data-theme="dark"] input[type="range"] {
-  accent-color: var(--da-primary);
-}
-
-[data-theme="dark"] input[type="range"]::-webkit-slider-thumb {
-  background: var(--da-primary);
-  box-shadow: 0 0 0 4px rgba(var(--da-primary-rgb), 0.2);
-}
-
-[data-theme="dark"] input[type="range"]::-webkit-slider-runnable-track {
-  background: var(--db-tertiary);
-}
-
-[data-theme="dark"] input[type="range"]::-moz-range-thumb {
-  background: var(--da-primary);
-  box-shadow: 0 0 0 4px rgba(var(--da-primary-rgb), 0.2);
-}
-
-[data-theme="dark"] input[type="range"]::-moz-range-track {
-  background: var(--db-tertiary);
-}
-
-/* Hover states */
-input[type="range"]:hover::-webkit-slider-thumb {
-  transform: scale(1.1);
-}
-
-input[type="range"]:hover::-moz-range-thumb {
-  transform: scale(1.1);
-}
-
-/* Active states */
-input[type="range"]:active::-webkit-slider-thumb {
-  transform: scale(0.9);
-}
-
-input[type="range"]:active::-moz-range-thumb {
-  transform: scale(0.9);
-}
-
-/* Canvas container */
+/* Canvas styles */
 .canvas-container {
   position: relative;
   border-radius: var(--spacing-4);
@@ -174,7 +71,7 @@ canvas {
   border-radius: var(--spacing-4);
 }
 
-/* Controls section */
+/* Controls layout */
 .controls-section {
   display: flex;
   flex-direction: column;
@@ -205,7 +102,6 @@ canvas {
   opacity: 1;
 }
 
-/* Override focus and active styles */
 .new-noise-button:focus,
 .new-noise-button:active {
   outline: none !important;
@@ -213,7 +109,7 @@ canvas {
   box-shadow: none !important;
 }
 
-/* Slider rows */
+/* Slider layout */
 .slider-row {
   display: flex;
   align-items: center;
@@ -262,6 +158,7 @@ canvas {
   gap: var(--spacing-4);
 }
 
+/* Color indicators */
 .color-dot {
   display: inline-block;
   width: 8px;

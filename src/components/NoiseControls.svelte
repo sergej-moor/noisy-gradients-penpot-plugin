@@ -6,12 +6,7 @@
 </script>
 
 <div class="controls-section">
-  <label class="slider-row">
-    <span class="body-s">Grain:</span>
-    <input type="range" 
-           bind:value={$noiseSettings.grainIntensity} 
-           min="0" max="0.15" step="0.01">
-  </label>
+
   <label class="slider-row">
     <span class="body-s">Scale:</span>
     <input type="range" 
@@ -39,7 +34,12 @@
            bind:value={$noiseSettings.blueIntensity} 
            min="0" max="3" step="0.1">
   </label>
-
+  <label class="slider-row">
+    <span class="body-s">Grain:</span>
+    <input type="range" 
+           bind:value={$noiseSettings.grainIntensity} 
+           min="0" max="0.1" step="0.01">
+  </label>
   <div class="bottom-section">
     <label class="form-group">
       <span class="body-s">Size (px)</span>

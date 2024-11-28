@@ -8,7 +8,7 @@ const initialSettings: NoiseSettings = {
   redIntensity: 1,
   greenIntensity: 1,
   blueIntensity: 1,
-  grainIntensity: 0.075,
+  grainIntensity: 0.04,
   size: 800,
 };
 

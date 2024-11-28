@@ -3,7 +3,7 @@ import type { PluginMessageEvent } from "./types";
 // Initialize plugin with slightly less height since canvas is now more compact
 penpot.ui.open("Noisy Gradients", `?theme=${penpot.theme}`, {
   width: 264,
-  height: 540,
+  height: 560,
 });
 
 async function addGradientToCanvas(data: { buffer: Uint8Array; size: number }) {

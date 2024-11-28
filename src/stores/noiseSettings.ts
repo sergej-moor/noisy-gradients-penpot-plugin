@@ -1,7 +1,7 @@
 import { writable } from "svelte/store";
 import type { NoiseSettings } from "../types";
 
-export const availableSizes = [800, 1200, 2000, 2400, 4000];
+export const availableSizes = [800, 1600, 3200];
 
 const initialSettings: NoiseSettings = {
   scale: 0.003,

@@ -1,6 +1,6 @@
 {
   "name": "Noisy Hues",
-  "description": "Noisy Hues plugin using perlin noise",
+  "description": "Create Noisy Gradients",
   "code": "/plugin.js",
   "icon": "/icon.png",
   "permissions": ["content:write"]

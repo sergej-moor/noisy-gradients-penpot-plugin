@@ -54,6 +54,47 @@ export class NoiseGenerator {
     );
   }
 
+  private generateColorGrain(intensity: number = 0.1): ImageData {
+    const canvas = document.createElement("canvas");
+    const fixedSize = 400;
+    canvas.width = fixedSize;
+    canvas.height = fixedSize;
+    const ctx = canvas.getContext("2d")!;
+    const imageData = ctx.createImageData(fixedSize, fixedSize);
+    const data = imageData.data;
+
+    for (let i = 0; i < data.length; i += 4) {
+      // Generate independent RGB noise values
+      const r = (Math.random() > 0.5 ? 1 : -1) * intensity * 255;
+      const g = (Math.random() > 0.5 ? 1 : -1) * intensity * 255;
+      const b = (Math.random() > 0.5 ? 1 : -1) * intensity * 255;
+
+      data[i] = r; // Red channel
+      data[i + 1] = g; // Green channel
+      data[i + 2] = b; // Blue channel
+      data[i + 3] = 255;
+    }
+
+    return imageData;
+  }
+
+  private blendImageData(base: ImageData, overlay: ImageData): void {
+    for (let i = 0; i < base.data.length; i += 4) {
+      // Apply RGB noise independently for each channel
+      for (let j = 0; j < 3; j++) {
+        const baseValue = base.data[i + j];
+        const overlayValue = overlay.data[i + j];
+
+        // Enhanced contrast blending
+        if (overlayValue < 0) {
+          base.data[i + j] = Math.max(0, baseValue + overlayValue * 1.5);
+        } else {
+          base.data[i + j] = Math.min(255, baseValue + overlayValue * 1.5);
+        }
+      }
+    }
+  }
+
   generateNoiseToCanvas(
     canvas: HTMLCanvasElement,
     settings: {
@@ -61,13 +102,15 @@ export class NoiseGenerator {
       redIntensity: number;
       greenIntensity: number;
       blueIntensity: number;
+      grainIntensity?: number;
     }
   ): void {
     const ctx = canvas.getContext("2d")!;
-    const fixedSize = 200;
+    const fixedSize = 400;
     canvas.width = fixedSize;
     canvas.height = fixedSize;
 
+    // Generate base gradient with enhanced contrast
     const imageData = ctx.createImageData(fixedSize, fixedSize);
     const data = imageData.data;
 
@@ -75,6 +118,7 @@ export class NoiseGenerator {
       for (let x = 0; x < fixedSize; x++) {
         const i = (y * fixedSize + x) * 4;
 
+        // Generate more vibrant base colors
         const r = this.noise(x * settings.scale, y * settings.scale);
         const g = this.noise(
           (x + fixedSize) * settings.scale,
@@ -85,11 +129,18 @@ export class NoiseGenerator {
           (y + fixedSize) * settings.scale
         );
 
-        data[i] = Math.floor((r + 1) * 128 * settings.redIntensity);
-        data[i + 1] = Math.floor((g + 1) * 128 * settings.greenIntensity);
-        data[i + 2] = Math.floor((b + 1) * 128 * settings.blueIntensity);
+        // Enhanced color mapping for more vibrancy
+        data[i] = Math.floor((r + 1) * 128 * settings.redIntensity * 1.2);
+        data[i + 1] = Math.floor((g + 1) * 128 * settings.greenIntensity * 1.2);
+        data[i + 2] = Math.floor((b + 1) * 128 * settings.blueIntensity * 1.2);
         data[i + 3] = 255;
       }
+    }
+
+    // Add colored grain
+    if (settings.grainIntensity) {
+      const grainData = this.generateColorGrain(settings.grainIntensity);
+      this.blendImageData(imageData, grainData);
     }
 
     ctx.putImageData(imageData, 0, 0);

@@ -12,6 +12,7 @@ export interface NoiseSettings {
   greenIntensity: number;
   blueIntensity: number;
   size: number;
+  grainIntensity: number;
 }
 
 export interface GradientData {

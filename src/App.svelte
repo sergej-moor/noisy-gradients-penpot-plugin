@@ -2,9 +2,11 @@
   import { onMount } from 'svelte';
   import { theme, updateTheme } from './stores/theme';
   import { noiseSettings, availableSizes } from './stores/noiseSettings';
+  import { NoiseGenerator } from './lib/noise';
  
   let canvas: HTMLCanvasElement;
   let isGenerating = $state(false);
+  let noiseGenerator: NoiseGenerator;
   
   // Watch for theme changes
   const handleMessage = (event: MessageEvent) => {
@@ -41,85 +43,11 @@
 
   function generateNoise() {
     if (!canvas) return;
-    
-    const ctx = canvas.getContext('2d')!;
-    const fixedSize = 200;
-    canvas.width = fixedSize;
-    canvas.height = fixedSize;
-    
-    const imageData = ctx.createImageData(fixedSize, fixedSize);
-    const data = imageData.data;
-    
-    for (let y = 0; y < fixedSize; y++) {
-      for (let x = 0; x < fixedSize; x++) {
-        const i = (y * fixedSize + x) * 4;
-        
-        const r = noise(x * $noiseSettings.scale, y * $noiseSettings.scale);
-        const g = noise((x + fixedSize) * $noiseSettings.scale, y * $noiseSettings.scale);
-        const b = noise(x * $noiseSettings.scale, (y + fixedSize) * $noiseSettings.scale);
-        
-        data[i] = Math.floor((r + 1) * 128 * $noiseSettings.redIntensity);
-        data[i + 1] = Math.floor((g + 1) * 128 * $noiseSettings.greenIntensity);
-        data[i + 2] = Math.floor((b + 1) * 128 * $noiseSettings.blueIntensity);
-        data[i + 3] = 255;
-      }
-    }
-    
-    ctx.putImageData(imageData, 0, 0);
-  }
-
-  // Perlin noise implementation
-  function noise(x: number, y: number): number {
-    const X = Math.floor(x) & 255;
-    const Y = Math.floor(y) & 255;
-    
-    x -= Math.floor(x);
-    y -= Math.floor(y);
-    
-    const u = fade(x);
-    const v = fade(y);
-    
-    const A = p[X] + Y;
-    const B = p[X + 1] + Y;
-    
-    return lerp(v, 
-      lerp(u, 
-        grad(p[A], x, y), 
-        grad(p[B], x - 1, y)
-      ),
-      lerp(u, 
-        grad(p[A + 1], x, y - 1),
-        grad(p[B + 1], x - 1, y - 1)
-      )
-    );
-  }
-
-  function fade(t: number): number {
-    return t * t * t * (t * (t * 6 - 15) + 10);
-  }
-
-  function lerp(t: number, a: number, b: number): number {
-    return a + t * (b - a);
-  }
-
-  function grad(hash: number, x: number, y: number): number {
-    const h = hash & 15;
-    const u = h < 8 ? x : y;
-    const v = h < 4 ? y : h === 12 || h === 14 ? x : 0;
-    return ((h & 1) === 0 ? u : -u) + ((h & 2) === 0 ? v : -v);
-  }
-
-  // Permutation table
-  let p = new Array(512);
-  let permutation: number[];
-
-  function initPermutation() {
-    permutation = [...Array(256)].map(() => Math.floor(Math.random() * 256));
-    for (let i = 0; i < 256; i++) p[256 + i] = p[i] = permutation[i];
+    noiseGenerator.generateNoiseToCanvas(canvas, $noiseSettings);
   }
 
   onMount(() => {
-    initPermutation();
+    noiseGenerator = new NoiseGenerator();
     generateNoise();
   });
 
@@ -139,7 +67,7 @@
       class="new-noise-button"
       aria-label="Generate new noise pattern"
       onclick={() => {
-        initPermutation();
+        noiseGenerator.initPermutation();
         generateNoise();
       }}>
       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="12" height="12" x="2" y="10" rx="2" ry="2"/><path d="m17.92 14 3.5-3.5a2.24 2.24 0 0 0 0-3l-5-4.92a2.24 2.24 0 0 0-3 0L10 6"/><path d="M6 18h.01"/><path d="M10 14h.01"/><path d="M15 6h.01"/><path d="M18 9h.01"/></svg>

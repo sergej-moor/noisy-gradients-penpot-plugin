@@ -3,12 +3,23 @@
   import type { NoiseSettings } from './types';
   import { onMount } from 'svelte';
  
-  let theme = $state(getTheme());
+  let theme = $state("");
+  // Initial theme from the URL
+  const url = new URL(window.location.href);
+  const initialTheme = url.searchParams.get('theme');
+  if (initialTheme) theme = initialTheme;
+
   let canvas: HTMLCanvasElement;
-  function getTheme() {
-  const urlParams = new URLSearchParams(window.location.search);
-  return urlParams.get("theme") === "light" ? "light" : "dark";
-}
+  
+  // Watch for theme changes
+  const handleMessage = (event: MessageEvent) => {
+    if (event.data.type === 'theme') {
+      theme = event.data.content;
+    } else if (event.data.type === 'image-success') {
+      isGenerating = false;
+    }
+  }
+
   // Noise settings
   const availableSizes = [800, 1200, 2000, 2400, 4000];
   
@@ -32,7 +43,7 @@
         parent.postMessage(
           {
             type: "generate-gradient",
-            data: {
+            content: {
               buffer: new Uint8Array(buffer),
               size: settings.size,
             },
@@ -128,18 +139,14 @@
   onMount(() => {
     initPermutation();
     generateNoise();
-
-    window.addEventListener('message', (event) => {
-      if (event.data.type === 'image-success') {
-        isGenerating = false;
-      }
-    });
   });
 
   $effect(() => {
     generateNoise();
   });
 </script>
+
+<svelte:window onmessage={handleMessage} />
 
 <main data-theme={theme}>
   <div class="canvas-container">

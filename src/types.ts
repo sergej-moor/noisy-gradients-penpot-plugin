@@ -1,16 +1,10 @@
-/**
- * This file contains the typescript interfaces for the plugin events.
- */
-
-export interface ThemePluginEvent {
-  type: string;
-  content: string;
-}
-
-export interface PluginMessageEvent {
-  type: "theme" | "generate-gradient";
-  data: any;
-}
+export type PluginMessageEvent =
+  | { type: "theme"; content: string }
+  | { type: "image-success" }
+  | {
+      type: "generate-gradient";
+      content: { buffer: Uint8Array; size: number };
+    };
 
 export interface NoiseSettings {
   scale: number;

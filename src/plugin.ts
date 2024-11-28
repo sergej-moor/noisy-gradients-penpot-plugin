@@ -1,7 +1,7 @@
 import type { PluginMessageEvent } from "./types";
 
 // Initialize plugin with slightly less height since canvas is now more compact
-penpot.ui.open("Noise Gradient", `?theme=${penpot.theme}`, {
+penpot.ui.open("Noisy Hues", `?theme=${penpot.theme}`, {
   width: 264,
   height: 540,
 });

@@ -1,37 +1,19 @@
 <script lang="ts">
-
-  import type { NoiseSettings } from './types';
   import { onMount } from 'svelte';
+  import { theme, updateTheme } from './stores/theme';
+  import { noiseSettings, availableSizes } from './stores/noiseSettings';
  
-  let theme = $state("");
-  // Initial theme from the URL
-  const url = new URL(window.location.href);
-  const initialTheme = url.searchParams.get('theme');
-  if (initialTheme) theme = initialTheme;
-
   let canvas: HTMLCanvasElement;
+  let isGenerating = $state(false);
   
   // Watch for theme changes
   const handleMessage = (event: MessageEvent) => {
     if (event.data.type === 'theme') {
-      theme = event.data.content;
+      updateTheme(event.data.content);
     } else if (event.data.type === 'image-success') {
       isGenerating = false;
     }
   }
-
-  // Noise settings
-  const availableSizes = [800, 1200, 2000, 2400, 4000];
-  
-  let settings: NoiseSettings = $state({
-    scale: 0.007,
-    redIntensity: 1,
-    greenIntensity: 1,
-    blueIntensity: 1,
-    size: 800
-  });
-
-  let isGenerating = $state(false);
 
   function handleApply() {
     if (!canvas) return;
@@ -45,7 +27,7 @@
             type: "generate-gradient",
             content: {
               buffer: new Uint8Array(buffer),
-              size: settings.size,
+              size: $noiseSettings.size,
             },
           },
           "*"
@@ -72,13 +54,13 @@
       for (let x = 0; x < fixedSize; x++) {
         const i = (y * fixedSize + x) * 4;
         
-        const r = noise(x * settings.scale, y * settings.scale);
-        const g = noise((x + fixedSize) * settings.scale, y * settings.scale);
-        const b = noise(x * settings.scale, (y + fixedSize) * settings.scale);
+        const r = noise(x * $noiseSettings.scale, y * $noiseSettings.scale);
+        const g = noise((x + fixedSize) * $noiseSettings.scale, y * $noiseSettings.scale);
+        const b = noise(x * $noiseSettings.scale, (y + fixedSize) * $noiseSettings.scale);
         
-        data[i] = Math.floor((r + 1) * 128 * settings.redIntensity);
-        data[i + 1] = Math.floor((g + 1) * 128 * settings.greenIntensity);
-        data[i + 2] = Math.floor((b + 1) * 128 * settings.blueIntensity);
+        data[i] = Math.floor((r + 1) * 128 * $noiseSettings.redIntensity);
+        data[i + 1] = Math.floor((g + 1) * 128 * $noiseSettings.greenIntensity);
+        data[i + 2] = Math.floor((b + 1) * 128 * $noiseSettings.blueIntensity);
         data[i + 3] = 255;
       }
     }
@@ -148,11 +130,9 @@
 
 <svelte:window onmessage={handleMessage} />
 
-<main data-theme={theme}>
+<main data-theme={$theme}>
   <div class="canvas-container">
-    <canvas 
-      bind:this={canvas}>
-    </canvas>
+    <canvas bind:this={canvas}></canvas>
     <button 
       type="button" 
       data-appearance="secondary"
@@ -168,30 +148,30 @@
   
   <div class="controls-section">
     <label class="slider-row">
-      <span class="body-s">Scale: <!-- {settings.scale.toFixed(3)} --></span>
+      <span class="body-s">Scale:</span>
       <input type="range" 
-             bind:value={settings.scale} 
+             bind:value={$noiseSettings.scale} 
              min="0.001" max="0.015" step="0.001">
     </label>
     
     <label class="slider-row">
-      <span class="body-s"><span class="color-dot red"></span>Red: <!-- {settings.redIntensity.toFixed(2)} --></span>
+      <span class="body-s"><span class="color-dot red"></span>Red:</span>
       <input type="range" 
-             bind:value={settings.redIntensity} 
+             bind:value={$noiseSettings.redIntensity} 
              min="0" max="3" step="0.1">
     </label>
     
     <label class="slider-row">
-      <span class="body-s"><span class="color-dot green"></span>Green: <!-- {settings.greenIntensity.toFixed(2)} --></span>
+      <span class="body-s"><span class="color-dot green"></span>Green:</span>
       <input type="range" 
-             bind:value={settings.greenIntensity} 
+             bind:value={$noiseSettings.greenIntensity} 
              min="0" max="3" step="0.1">
     </label>
     
     <label class="slider-row">
-      <span class="body-s"><span class="color-dot blue"></span>Blue: <!-- {settings.blueIntensity.toFixed(2)} --></span>
+      <span class="body-s"><span class="color-dot blue"></span>Blue:</span>
       <input type="range" 
-             bind:value={settings.blueIntensity} 
+             bind:value={$noiseSettings.blueIntensity} 
              min="0" max="3" step="0.1">
     </label>
 
@@ -199,7 +179,7 @@
       <label class="form-group">
         <span class="body-s">Size (px)</span>
         <select 
-          bind:value={settings.size}
+          bind:value={$noiseSettings.size}
           class="select">
           {#each availableSizes as size}
             <option value={size}>{size}</option>
@@ -216,7 +196,7 @@
           Generating...
         {:else}
           <span class="body-m">Insert</span>
-          <span class="body-s" style="opacity: 0.8">{settings.size}×{settings.size}px, PNG</span>
+          <span class="body-s" style="opacity: 0.8">{$noiseSettings.size}×{$noiseSettings.size}px, PNG</span>
         {/if}
       </button>
     </div>
